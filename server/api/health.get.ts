@@ -1,44 +1,40 @@
-// Diagnostic health check — tests each component
-export default defineEventHandler(async () => {
-  const checks = {}
+// Diagnostic health check v2 — tests adapter injection via event.context
+import { defineEventHandler, createError } from 'h3'
 
-  // 1. Basic handler works
+export default defineEventHandler(async (event) => {
+  const checks = {} as Record<string, any>
+
+  // 1. Basic handler
   checks.handler = 'ok'
 
   // 2. Runtime config
   try {
     const config = useRuntimeConfig()
-    checks.runtimeConfig = 'ok'
-    checks.hasCommerceConfig = !!config.commerce
     checks.adapter = config.commerce?.adapter || 'not set'
-    checks.databaseUrl = config.commerce?.databaseUrl ? 'set (length: ' + config.commerce.databaseUrl.length + ')' : 'not set'
-  } catch (e) {
+    checks.databaseUrl = config.commerce?.databaseUrl ? 'set' : 'not set'
+  } catch (e: any) {
     checks.runtimeConfig = 'error: ' + e.message
   }
 
-  // 3. Try importing @commercejs/platform
-  try {
-    const platform = await import('@commercejs/platform')
-    checks.platformImport = 'ok'
-    checks.platformKeys = Object.keys(platform).slice(0, 10)
-  } catch (e) {
-    checks.platformImport = 'error: ' + e.message
+  // 3. Check event.context for adapter
+  checks.hasAdapter = !!(event.context as any)._commerceAdapter
+  checks.hasInitError = !!(event.context as any)._commerceInitError
+  if ((event.context as any)._commerceInitError) {
+    const err = (event.context as any)._commerceInitError
+    checks.initError = err.message || String(err)
+    checks.initErrorStack = err.stack?.split('\n').slice(0, 5)
   }
 
-  // 4. Try DB connection
-  try {
-    const platform = await import('@commercejs/platform')
-    if (platform.getDrizzleDb) {
-      const db = platform.getDrizzleDb()
-      checks.dbInit = db ? 'ok' : 'not initialized'
-    } else if (platform.getDb) {
-      const db = platform.getDb()
-      checks.dbInit = db ? 'ok' : 'not initialized'
-    } else {
-      checks.dbInit = 'no getDb/getDrizzleDb export found'
+  // 4. Try calling adapter.getStoreInfo()
+  if ((event.context as any)._commerceAdapter) {
+    try {
+      const adapter = (event.context as any)._commerceAdapter
+      const storeInfo = await adapter.getStoreInfo()
+      checks.storeInfo = storeInfo || 'null/undefined'
+    } catch (e: any) {
+      checks.storeInfoError = e.message
+      checks.storeInfoStack = e.stack?.split('\n').slice(0, 5)
     }
-  } catch (e) {
-    checks.dbInit = 'error: ' + e.message
   }
 
   return checks
