@@ -1,5 +1,4 @@
-// Deep diagnostic: try importing and calling the store route handler directly
-// This will show whether the MODULE LOADING or the HANDLER EXECUTION fails
+// Simple health check — v6 
 import { defineEventHandler } from 'h3'
 
 export default defineEventHandler(async (event) => {
@@ -7,46 +6,28 @@ export default defineEventHandler(async (event) => {
   checks.handler = 'ok'
   checks.hasAdapter = !!(event.context as any)._commerceAdapter
 
-  // 1. Direct adapter call (we know this works)
+  // Direct adapter call
   if ((event.context as any)._commerceAdapter) {
     try {
-      const result = await (event.context as any)._commerceAdapter.getStoreInfo()
+      const adapter = (event.context as any)._commerceAdapter
+      const result = await adapter.getStoreInfo()
       checks.directCall = result?.name ? 'ok' : 'empty'
     } catch (e: any) {
-      checks.directCallError = { message: e.message, stack: e.stack?.split('\n').slice(0, 5) }
+      checks.directCallError = e.message
     }
   }
 
-  // 2. Try to dynamically import the handler module
+  // Internal fetch with full error details
   try {
-    const mod = await import('@commercejs/nuxt/dist/runtime/server/utils/handler')
-    checks.handlerImport = Object.keys(mod)
+    const result = await $fetch('/api/_commerce/store')
+    checks.internalFetch = 'ok'
+    checks.storeName = (result as any)?.name
   } catch (e: any) {
-    checks.handlerImportError = { message: e.message, stack: e.stack?.split('\n').slice(0, 5) }
-  }
-
-  // 3. Try to import the actual store route handler
-  try {
-    const mod = await import('@commercejs/nuxt/dist/runtime/server/api/_commerce/store.get')
-    checks.storeRouteImport = typeof mod.default
-  } catch (e: any) {
-    checks.storeRouteImportError = { message: e.message, stack: e.stack?.split('\n').slice(0, 5) }
-  }
-
-  // 4. Try to call defineCommerceHandler directly
-  try {
-    const { defineCommerceHandler } = await import('@commercejs/nuxt/dist/runtime/server/utils/handler')
-    checks.defineCommerceHandlerType = typeof defineCommerceHandler
-  } catch (e: any) {
-    checks.defineCommerceHandlerError = { message: e.message, stack: e.stack?.split('\n').slice(0, 5) }
-  }
-
-  // 5. Try to import the adapter utils
-  try {
-    const mod = await import('@commercejs/nuxt/dist/runtime/server/utils/adapter')
-    checks.adapterUtilImport = Object.keys(mod)
-  } catch (e: any) {
-    checks.adapterUtilError = { message: e.message, stack: e.stack?.split('\n').slice(0, 5) }
+    checks.fetchError = e.message
+    checks.fetchStatusCode = e.statusCode
+    // Try to get the actual cause
+    if (e.data?.message) checks.fetchDataMessage = e.data.message
+    if (e.data?.data) checks.fetchDataData = e.data.data
   }
 
   return checks
