@@ -1,0 +1,5 @@
+compatibility_flags = ["nodejs_compat"]
+compatibility_date = "2026-02-01"
+
+[pages]
+build_output_dir = "dist"
