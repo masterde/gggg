@@ -37,19 +37,19 @@ export default defineNuxtConfig({
   // Runtime config — Google Maps for delivery location
   runtimeConfig: {
     public: {
-      googleMapsKey: process.env.GOOGLE_MAPS_KEY || '\',
+      googleMapsKey: process.env.GOOGLE_MAPS_KEY || '',
     },
   },
 
   // Route caching — CDN performance
   routeRules: {
-    '/\': { swr: 3600 },
-    '/products/**\': { swr: 600 },
-    '/categories/**\': { swr: 600 },
-    '/_nuxt/**\': { headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } },
+    '/': { swr: 3600 },
+    '/products/**': { swr: 600 },
+    '/categories/**': { swr: 600 },
+    '/_nuxt/**': { headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } },
   },
 
-  // Nitro — Cloudflare Pages preset
+  // Nitro — Cloudflare Pages preset with Node.js compatibility
   nitro: {
     preset: 'cloudflare-pages',
     cloudflare: {
