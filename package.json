@@ -9,7 +9,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@commercejs/nuxt": "^0.5.1",
+    "@commercejs/nuxt": "^0.6.0",
     "@commercejs/platform": "^0.5.1",
     "@commercejs/types": "^0.3.0",
     "@commercejs/ui": "^0.1.3",
