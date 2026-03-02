@@ -2,6 +2,10 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
 
+  // Disable SSR — client-side SPA mode to avoid SSR crash on CF Workers
+  // TODO: Re-enable SSR after fixing the Vue SSR rendering pipeline on CF
+  ssr: false,
+
   modules: [
     '@nuxt/ui',
     '@nuxt/image',
