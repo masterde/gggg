@@ -32,17 +32,20 @@ jobs:
 
       - name: Debug - Check defineCommerceHandler in bundle
         run: |
-          echo "=== Files in dist/_worker.js/ ==="
-          find dist/_worker.js -name "*.mjs" -type f | head -20
+          echo "=== defineCommerceHandler in .mjs files (not maps) ==="
+          grep -rn "defineCommerceHandler" dist/_worker.js/ --include="*.mjs" || echo "NOT FOUND in any .mjs!"
           echo ""
-          echo "=== defineCommerceHandler occurrences ==="
-          grep -rn "defineCommerceHandler" dist/_worker.js/ || echo "NOT FOUND!"
+          echo "=== function definition check ==="
+          grep -c "function defineCommerceHandler" dist/_worker.js/chunks/nitro/nitro.mjs || echo "NO function defineCommerceHandler"
           echo ""
-          echo "=== First 5 lines of nitro.mjs ==="
-          head -5 dist/_worker.js/chunks/nitro/nitro.mjs 2>/dev/null || echo "nitro.mjs not found"
+          echo "=== How defineCommerceHandler appears in nitro.mjs ==="
+          grep -o ".\{0,50\}defineCommerceHandler.\{0,50\}" dist/_worker.js/chunks/nitro/nitro.mjs | head -5
           echo ""
-          echo "=== Function definition check ==="
-          grep -c "function defineCommerceHandler" dist/_worker.js/chunks/nitro/nitro.mjs 2>/dev/null || echo "defineCommerceHandler function NOT defined"
+          echo "=== nitro.mjs size ==="
+          wc -c dist/_worker.js/chunks/nitro/nitro.mjs
+          echo ""
+          echo "=== index.js content ==="
+          cat dist/_worker.js/index.js
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
