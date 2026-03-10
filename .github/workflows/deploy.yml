@@ -30,27 +30,21 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: Debug - Check defineCommerceHandler in bundle
+      - name: Debug - Verify bundle
         run: |
-          echo "=== defineCommerceHandler in .mjs files (not maps) ==="
-          grep -rn "defineCommerceHandler" dist/_worker.js/ --include="*.mjs" || echo "NOT FOUND in any .mjs!"
-          echo ""
-          echo "=== function definition check ==="
-          grep -c "function defineCommerceHandler" dist/_worker.js/chunks/nitro/nitro.mjs || echo "NO function defineCommerceHandler"
-          echo ""
-          echo "=== How defineCommerceHandler appears in nitro.mjs ==="
-          grep -o ".\{0,50\}defineCommerceHandler.\{0,50\}" dist/_worker.js/chunks/nitro/nitro.mjs | head -5
-          echo ""
           echo "=== nitro.mjs size ==="
           wc -c dist/_worker.js/chunks/nitro/nitro.mjs
-          echo ""
-          echo "=== index.js content ==="
+          echo "=== defineCommerceHandler count in nitro.mjs ==="
+          grep -co "defineCommerceHandler" dist/_worker.js/chunks/nitro/nitro.mjs || echo "0"
+          echo "=== index.js ==="
           cat dist/_worker.js/index.js
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          wranglerVersion: '4'
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=${{ secrets.CF_PAGES_PROJECT_NAME }} --branch=${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main' }} --commit-hash=${{ github.sha }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler@latest pages deploy dist \
+            --project-name=${{ secrets.CF_PAGES_PROJECT_NAME }} \
+            --branch=${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main' }} \
+            --commit-hash=${{ github.sha }}
