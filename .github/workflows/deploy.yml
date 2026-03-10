@@ -30,6 +30,20 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Debug - Check defineCommerceHandler in bundle
+        run: |
+          echo "=== Files in dist/_worker.js/ ==="
+          find dist/_worker.js -name "*.mjs" -type f | head -20
+          echo ""
+          echo "=== defineCommerceHandler occurrences ==="
+          grep -rn "defineCommerceHandler" dist/_worker.js/ || echo "NOT FOUND!"
+          echo ""
+          echo "=== First 5 lines of nitro.mjs ==="
+          head -5 dist/_worker.js/chunks/nitro/nitro.mjs 2>/dev/null || echo "nitro.mjs not found"
+          echo ""
+          echo "=== Function definition check ==="
+          grep -c "function defineCommerceHandler" dist/_worker.js/chunks/nitro/nitro.mjs 2>/dev/null || echo "defineCommerceHandler function NOT defined"
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
