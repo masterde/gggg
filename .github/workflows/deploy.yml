@@ -25,36 +25,10 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Build
         run: pnpm run build
-
-      - name: Debug - Verify bundle
-        run: |
-          echo "=== nitro.mjs size ==="
-          wc -c dist/_worker.js/chunks/nitro/nitro.mjs
-          echo "=== Route handler files ==="
-          find dist/_worker.js -name "*.mjs" -type f | sort
-          echo "=== defineCommerceHandler context in nitro.mjs ==="
-          grep -oP ".{0,40}defineCommerceHandler.{0,40}" dist/_worker.js/chunks/nitro/nitro.mjs | head -3
-          echo "=== Check for separate route handler chunks that use defineCommerceHandler ==="
-          for f in $(find dist/_worker.js/chunks/routes -name "*.mjs" -type f 2>/dev/null); do
-            if grep -q "defineCommerceHandler" "$f"; then
-              echo "FOUND in: $f"
-              grep -o ".{0,60}defineCommerceHandler.{0,60}" "$f" | head -2
-            fi
-          done
-          echo "=== Check _commerce route files ==="
-          find dist/_worker.js -path "*_commerce*" -type f 2>/dev/null | head -10
-          echo "=== .nuxt generated commerce handlers ==="
-          find .nuxt -name "*commerce*" -type f 2>/dev/null | head -10
-
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: cf-pages-dist
-          path: dist/
 
       - name: Deploy to Cloudflare Pages
         env:
